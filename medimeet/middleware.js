@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-// Match routes that require authentication
+// Protected route patterns
 const isProtectedRoute = createRouteMatcher([
   "/doctors(.*)",
   "/onboarding(.*)",
@@ -14,8 +14,10 @@ const isProtectedRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
 
-  // ✅ FIX: Use req.nextUrl instead of req
-  if (!userId && isProtectedRoute(req.nextUrl)) {
+  // ✅ Use req.url and convert to pathname
+  const pathname = new URL(req.url).pathname;
+
+  if (!userId && isProtectedRoute({ pathname })) {
     const { redirectToSignIn } = await auth();
     return redirectToSignIn();
   }
@@ -23,7 +25,7 @@ export default clerkMiddleware(async (auth, req) => {
   return NextResponse.next();
 });
 
-// ✅ Tell Vercel to use Node.js runtime (not Edge)
+// ✅ Set runtime to Node.js (not Edge)
 export const config = {
   matcher: [
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",

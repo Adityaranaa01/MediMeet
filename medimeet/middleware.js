@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-// Protected route patterns
+// Define protected routes
 const isProtectedRoute = createRouteMatcher([
   "/doctors(.*)",
   "/onboarding(.*)",
@@ -14,9 +14,10 @@ const isProtectedRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
 
-  // ✅ Use req.url and convert to pathname
+  // ✅ Correctly extract pathname from URL
   const pathname = new URL(req.url).pathname;
 
+  // ✅ Pass { pathname } object, not just the string
   if (!userId && isProtectedRoute({ pathname })) {
     const { redirectToSignIn } = await auth();
     return redirectToSignIn();
@@ -25,7 +26,7 @@ export default clerkMiddleware(async (auth, req) => {
   return NextResponse.next();
 });
 
-// ✅ Set runtime to Node.js (not Edge)
+// ✅ Force Node.js runtime to avoid Edge issues
 export const config = {
   matcher: [
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
